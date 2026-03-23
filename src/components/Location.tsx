@@ -67,17 +67,19 @@ export default function Location() {
             </div>
           </div>
 
-          <div className={`rounded-2xl overflow-hidden shadow-warm-lg ${isVisible ? "animate-slide-in-right" : ""}`}>
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.8!2d-70.710!3d-33.490!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c0f7e5e7a0a1%3A0x123456789abcdef!2zTG8gRXJyYXrDumx1cml6IDQ0MzcsIENlcnJpbGxvcywgU2FudGlhZ28!5e0!3m2!1ses!2scl!4v1234567890!5m2!1ses!2scl"
-              width="100%"
-              height="480"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Ubicación Don Vicente"
-            />
+          <div className={`rounded-2xl overflow-hidden shadow-warm-lg w-full ${isVisible ? "animate-slide-in-right" : ""}`}>
+            <div className="w-full h-96 bg-warm-cream flex items-center justify-center rounded-2xl">
+              <iframe
+                title="Ubicación Don Vicente"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.0644!2d-70.715!3d-33.49!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c0f7e5e7a0a1%3A0x123456789abcdef!2sLo%20Err%C3%A1zuriz%204437%2C%20Cerrillos%2C%20Santiago!5e0!3m2!1ses!2scl!4v1700000000000"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
           </div>
         </div>
       </div>
