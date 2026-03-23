@@ -1,27 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoDuration, setVideoDuration] = useState(10);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const onLoadedMetadata = () => {
-      setVideoDuration(video.duration || 10);
-    };
-
-    video.addEventListener("loadedmetadata", onLoadedMetadata);
-    return () => video.removeEventListener("loadedmetadata", onLoadedMetadata);
-  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
     if (!section || !video) return;
+
+    // Pause video - we control it manually via scroll
+    video.pause();
+    video.currentTime = 0;
 
     let ticking = false;
 
@@ -30,12 +21,27 @@ export default function Hero() {
       const viewportHeight = window.innerHeight;
       const sectionHeight = section.offsetHeight;
 
-      // Progress from 0 to 1 as section scrolls through viewport
-      const progress = Math.min(Math.max(-rect.top / (sectionHeight - viewportHeight), 0), 1);
+      // Calculate exact scroll progress through the section
+      const start = rect.top;
+      const end = rect.bottom - viewportHeight;
 
-      // Update video time based on scroll progress
-      const targetTime = progress * videoDuration;
-      video.currentTime = targetTime;
+      // Progress from 0 to 1 as we scroll through section
+      let progress;
+      if (rect.top >= viewportHeight) {
+        // Section hasn't entered viewport
+        progress = 0;
+      } else if (rect.bottom <= 0) {
+        // Section has passed viewport
+        progress = 1;
+      } else {
+        // Section is in viewport - calculate exact progress
+        const scrollable = sectionHeight - viewportHeight;
+        const scrolled = -rect.top;
+        progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
+      }
+
+      // Directly map scroll to video time - no autoplay
+      video.currentTime = progress * video.duration;
 
       ticking = false;
     };
@@ -57,14 +63,14 @@ export default function Hero() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", updateVideoTime);
     };
-  }, [videoDuration]);
+  }, []);
 
   return (
     <section
       ref={sectionRef}
       className="relative min-h-[250dvh]"
     >
-      {/* Fixed video background - centered, no movement */}
+      {/* Fixed video background - only moves with scroll */}
       <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute inset-0">
           <video
@@ -74,7 +80,6 @@ export default function Hero() {
             playsInline
             preload="auto"
             aria-hidden="true"
-            autoPlay
           >
             <source src="/video-bg.mp4" type="video/mp4" />
           </video>
