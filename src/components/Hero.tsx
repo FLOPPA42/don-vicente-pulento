@@ -24,8 +24,8 @@ export default function Hero() {
         
         targetTime = progress * video.duration;
 
-        // Debounce actualizaciones microscópicas para evitar colapsar el decodificador H264 de Chromium
-        if (Math.abs(video.currentTime - targetTime) > 0.04) {
+        // Actualizamos cada frame disponible sin el debounce arbitrario
+        if (Math.abs(video.currentTime - targetTime) > 0.005) {
           video.currentTime = targetTime;
         }
       }
