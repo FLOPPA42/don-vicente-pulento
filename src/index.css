@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&display=swap');
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-sans/900.css";
 
 @tailwind base;
 @tailwind components;
@@ -67,7 +71,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Poppins', system-ui, sans-serif;
+    font-family: 'Geist Sans', system-ui, sans-serif;
   }
 }
 
@@ -95,6 +99,15 @@
   }
   .shadow-warm-xl {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  }
+  .liquid-glass {
+    @apply backdrop-blur-xl bg-white/10 border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)];
+  }
+  .liquid-glass-dark {
+    @apply backdrop-blur-xl bg-black/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];
+  }
+  .diffusion-shadow {
+    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
   }
 }
 

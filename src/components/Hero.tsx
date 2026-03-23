@@ -1,34 +1,69 @@
-import { useEffect, useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform, useMotionValueEvent, type Variants } from "framer-motion";
 import { ArrowDown } from "@phosphor-icons/react";
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { scrollY } = useScroll();
 
-  // Parallax effect: video se mueve frame por frame con el scroll
-  const videoY = useTransform(scrollY, [0, 800], [0, -400]);
-  // Opacidad del video: se desvanece progresivamente al hacer scroll
-  const videoOpacity = useTransform(scrollY, [0, 600], [1, 0]);
+  const videoY = useTransform(scrollY, [0, 800], [0, -300]);
+  const videoOpacity = useTransform(scrollY, [0, 600], [1, 0.1]);
 
+  const [videoDuration, setVideoDuration] = useState(0);
+
+  // Set the duration when video metadata is loaded
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    video.play().catch(() => {
-      // Autoplay puede estar bloqueado, está bien
-    });
+    const handleLoadedMetadata = () => setVideoDuration(video.duration);
+    
+    // Si ya cargó antes de que se ejecute el efecto
+    if (video.readyState >= 1) {
+      setVideoDuration(video.duration);
+    } else {
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    }
 
     return () => {
-      // Limpieza si es necesaria
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, []);
 
+  // Update video frame continuously based on scroll position
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const video = videoRef.current;
+    if (video && videoDuration > 0) {
+      // Reduje la distancia máxima (500px) para que el video recorra toda su duración mucho más rápido al hacer scroll
+      const maxScrollDistance = 500; 
+      const progress = Math.min(Math.max(latest / maxScrollDistance, 0), 0.99);
+      video.currentTime = progress * videoDuration;
+    }
+  });
+
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      filter: "blur(0px)",
+      transition: { type: "spring", stiffness: 100, damping: 20 }
+    },
+  };
+
   return (
-    <section className="relative min-h-screen overflow-hidden">
-      {/* Video background - responde al scroll frame por frame */}
+    <section className="relative min-h-[100dvh] w-full overflow-hidden bg-surface-dark flex items-center">
+      {/* Background Frame with video integration */}
       <motion.div
-        className="fixed inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ 
           y: videoY,
           opacity: videoOpacity
@@ -37,8 +72,6 @@ export default function Hero() {
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
-          autoPlay
-          loop
           muted
           playsInline
           preload="auto"
@@ -46,119 +79,83 @@ export default function Hero() {
           <source src="/video-bg.mp4" type="video/mp4" />
         </video>
         
-        {/* Overlay gradients para profundidad */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/80" />
-        
-        {/* Mesh gradient accent */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-secondary/15 mix-blend-overlay" />
+        {/* Deep asymmetric gradient for left-aligned text */}
+        <div className="absolute inset-0 bg-gradient-to-r from-surface-dark via-surface-dark/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-dark via-surface-dark/50 to-transparent" />
       </motion.div>
 
-      {/* Noise texture overlay */}
-      <div className="absolute inset-0 noise-overlay pointer-events-none" />
+      {/* Mandatory noise filter */}
+      <div className="absolute inset-0 pointer-events-none noise-overlay z-0" />
 
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="h-screen flex flex-col items-center justify-center px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center max-w-5xl"
-          >
-            {/* Decorative element */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="mb-6 flex justify-center"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary rounded-full blur-xl opacity-50 animate-pulse" />
-                <span className="relative text-5xl md:text-6xl">🔥</span>
-              </div>
-            </motion.div>
-
-            {/* Main headline con text-balance */}
-            <h1 className="text-balance text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white drop-shadow-2xl mb-6">
-              <span className="block">Los Mejores</span>
-              <span className="block bg-gradient-to-r from-yellow-300 via-primary-foreground to-secondary-foreground bg-clip-text text-transparent">
-                Churrascos
-              </span>
-            </h1>
-
-            {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light"
-            >
-              Sabor auténtico de Chile en cada bocado
-            </motion.p>
-
-            {/* CTA Buttons con microinteracciones */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center"
-            >
-              <a
-                href="#menu"
-                className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-primary to-primary/90 px-8 py-4 text-base font-bold text-primary-foreground uppercase tracking-wider shadow-glow-green hover:shadow-glow-green/70 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
-              >
-                {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                <span className="relative z-10">Ver menú</span>
-              </a>
-
-              <a
-                href="#ubicacion"
-                className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-secondary to-secondary/90 px-8 py-4 text-base font-bold text-secondary-foreground uppercase tracking-wider shadow-glow-yellow hover:shadow-glow-yellow/70 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                <span className="relative z-10">Ver ubicación</span>
-              </a>
-
-              <a
-                href={import.meta.env.VITE_WHATSAPP_URL || "https://wa.me/56972521711?text=Hola%20Don%20Vicente!%20Quiero%20hacer%20un%20pedido"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#25D366] to-[#128C7E] px-8 py-4 text-base font-bold text-white uppercase tracking-wider shadow-glow-green hover:shadow-glow-green/70 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                <span className="relative z-10">Pedir ahora</span>
-              </a>
-            </motion.div>
+      {/* Asymmetrical Layout Content */}
+      <div className="container relative z-10 px-6 sm:px-12 lg:px-24 w-full">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="w-full lg:w-[65%] flex flex-col justify-center min-h-[100dvh] pt-20 pb-12"
+        >
+          {/* Eyebrow / Decorative */}
+          <motion.div variants={itemVariants} className="flex items-center gap-4 mb-8">
+            <div className="h-[2px] w-12 bg-primary"></div>
+            <span className="text-primary font-bold tracking-[0.2em] uppercase text-xs sm:text-sm">
+              Sabor Auténtico de Barrio
+            </span>
           </motion.div>
-        </div>
+
+          {/* Premium Typography Implementation (Geist Sans) */}
+          <motion.h1 
+            variants={itemVariants}
+            className="text-balance text-6xl sm:text-7xl md:text-8xl lg:text-[7.5rem] font-black tracking-tighter text-white leading-[0.9] mb-10"
+          >
+            Los Mejores<br/>
+            <span className="text-secondary inline-block mt-2 drop-shadow-[0_0_40px_rgba(250,204,21,0.2)]">
+              Churrascos
+            </span>
+          </motion.h1>
+
+          <motion.p 
+            variants={itemVariants}
+            className="text-lg sm:text-xl lg:text-2xl text-zinc-400 max-w-[50ch] leading-relaxed mb-14 font-light"
+          >
+            Descubre la verdadera experiencia culinaria local con ingredientes frescos y una preparación experta diseñada para encender tus sentidos.
+          </motion.p>
+
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row gap-6 items-start"
+          >
+            <motion.a
+              href="#menu"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="liquid-glass-dark hover:bg-white/10 px-10 py-5 rounded-[2rem] text-white font-bold tracking-widest uppercase text-sm transition-colors border-white/20 w-full sm:w-auto text-center"
+            >
+              Ver menú
+            </motion.a>
+            <motion.a
+              href={import.meta.env.VITE_WHATSAPP_URL || "https://wa.me/56972521711?text=Hola%20Don%20Vicente!%20Quiero%20hacer%20un%20pedido"}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              className="bg-primary text-primary-foreground px-10 py-5 rounded-[2rem] font-bold tracking-widest uppercase text-sm shadow-[0_20px_40px_-15px_rgba(220,38,38,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(220,38,38,0.6)] w-full sm:w-auto text-center transition-all"
+            >
+              Pedir ahora
+            </motion.a>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Scroll indicator con animación mejorada */}
+      {/* Floating scroll indicator positioned asymmetrically */}
       <motion.a
         href="#promociones"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ 
-          duration: 0.6, 
-          delay: 0.8, 
-          ease: [0.16, 1, 0.3, 1],
-          repeat: Infinity,
-          repeatType: "reverse",
-          repeatDelay: 0.5
-        }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 group"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 1.5, duration: 1, type: "spring" }}
+        className="absolute bottom-12 right-12 lg:right-24 z-20 group hidden md:flex items-center justify-center w-20 h-20 liquid-glass rounded-full hover:bg-white/20 transition-all cursor-pointer"
       >
-        <div className="relative">
-          <div className="absolute -inset-3 bg-gradient-to-r from-primary to-secondary rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm border border-border">
-            <ArrowDown 
-              size={24} 
-              weight="bold" 
-              className="text-primary group-hover:text-secondary transition-colors"
-            />
-          </div>
-        </div>
+        <ArrowDown size={28} className="text-zinc-400 group-hover:text-primary group-hover:translate-y-2 transition-all duration-300" />
       </motion.a>
     </section>
   );
