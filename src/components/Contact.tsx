@@ -9,7 +9,7 @@ export default function Contact() {
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
 
       <div className="container relative z-10" ref={ref}>
-        <div className={isVisible ? "animate-reveal-up" : "opacity-0"}>
+        <div className={isVisible ? "animate-slide-up" : "opacity-0"}>
           <span className="inline-block text-5xl mb-6">📞</span>
           <h2 className="text-3xl sm:text-5xl font-black text-secondary uppercase tracking-tight mb-4 text-balance">
             Pide tu comida favorita

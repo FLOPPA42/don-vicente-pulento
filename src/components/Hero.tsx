@@ -19,7 +19,7 @@ export default function Hero() {
       <div
         ref={ref}
         className={`relative z-10 max-w-3xl px-6 py-20 text-center ${
-          isVisible ? "animate-reveal-up" : "opacity-0"
+          isVisible ? "animate-slide-up" : "opacity-0"
         }`}
       >
         {/* Badge */}

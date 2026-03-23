@@ -88,7 +88,7 @@ export default function MenuSection() {
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-secondary/30 to-transparent" />
 
       <div className="container relative z-10" ref={ref}>
-        <div className={`text-center mb-16 ${isVisible ? "animate-reveal-up" : "opacity-0"}`}>
+        <div className={`text-center mb-16 ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
           <span className="inline-block text-4xl mb-4">🍔</span>
           <h2 className="text-3xl sm:text-5xl font-black text-secondary uppercase mb-4 tracking-tight text-balance">
             Nuestro Menú
@@ -112,7 +112,7 @@ function CategoryBlock({ category }: { category: Category }) {
 
   return (
     <div className="mb-20 last:mb-0" ref={ref}>
-      <div className={`flex items-center gap-3 mb-10 ${isVisible ? "animate-reveal-up" : "opacity-0"}`}>
+      <div className={`flex items-center gap-3 mb-10 ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-secondary/10">
           <Icon className="w-5 h-5 text-secondary" />
         </div>
@@ -125,7 +125,7 @@ function CategoryBlock({ category }: { category: Category }) {
           <div
             key={item.name}
             className={`group bg-surface-dark-card rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-warm-lg flex flex-col border border-white/[0.04] ${
-              isVisible ? "animate-reveal-up" : "opacity-0"
+              isVisible ? "animate-slide-up" : "opacity-0"
             }`}
             style={{ animationDelay: `${i * 80}ms` }}
           >

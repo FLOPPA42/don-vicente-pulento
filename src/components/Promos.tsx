@@ -42,7 +42,7 @@ export default function Promos() {
       <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-5" style={{ background: "hsl(42 95% 55%)" }} />
 
       <div className="container relative z-10" ref={ref}>
-        <div className={`text-center mb-16 ${isVisible ? "animate-reveal-up" : "opacity-0"}`}>
+        <div className={`text-center mb-16 ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
           <span className="inline-block text-4xl mb-4">🔥</span>
           <h2 className="text-3xl sm:text-5xl font-black text-primary-foreground uppercase mb-4 text-balance tracking-tight">
             Promociones Imperdibles
@@ -58,7 +58,7 @@ export default function Promos() {
               key={p.title}
               className={`group relative bg-card rounded-2xl overflow-hidden shadow-warm-lg transition-all duration-500 hover:-translate-y-3 hover:shadow-warm-xl ${
                 p.featured ? "ring-2 ring-secondary ring-offset-2 ring-offset-transparent md:scale-[1.03]" : ""
-              } ${isVisible ? "animate-reveal-up" : "opacity-0"}`}
+              } ${isVisible ? "animate-slide-up" : "opacity-0"}`}
               style={{ animationDelay: `${i * 120}ms` }}
             >
               {p.badge && (

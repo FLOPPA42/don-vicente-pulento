@@ -7,7 +7,7 @@ export default function Location() {
   return (
     <section id="ubicacion" className="py-24 sm:py-32 bg-warm-cream">
       <div className="container" ref={ref}>
-        <div className={`text-center mb-16 ${isVisible ? "animate-reveal-up" : "opacity-0"}`}>
+        <div className={`text-center mb-16 ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
           <span className="inline-block text-4xl mb-4">📍</span>
           <h2 className="text-3xl sm:text-5xl font-black text-primary uppercase tracking-tight text-balance">
             Visítanos
@@ -15,7 +15,7 @@ export default function Location() {
         </div>
 
         <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-start ${isVisible ? "" : "opacity-0"}`}>
-          <div className={isVisible ? "animate-slide-left" : ""}>
+          <div className={isVisible ? "animate-slide-in-left" : ""}>
             {/* Hours card */}
             <div className="bg-card rounded-2xl p-8 shadow-warm mb-6">
               <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2.5">
@@ -67,7 +67,7 @@ export default function Location() {
             </div>
           </div>
 
-          <div className={`rounded-2xl overflow-hidden shadow-warm-lg ${isVisible ? "animate-slide-right" : ""}`}>
+          <div className={`rounded-2xl overflow-hidden shadow-warm-lg ${isVisible ? "animate-slide-in-right" : ""}`}>
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.8!2d-70.710!3d-33.490!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662c0f7e5e7a0a1%3A0x123456789abcdef!2zTOWhw6phcyA0NDM3LCBDZXJyaWxsb3MsIFNhbnRpYWdv!5e0!3m2!1ses!2scl!4v1234567890"
               width="100%"

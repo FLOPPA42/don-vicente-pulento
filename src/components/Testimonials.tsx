@@ -25,7 +25,7 @@ export default function Testimonials() {
   return (
     <section className="py-24 sm:py-32 bg-background">
       <div className="container" ref={ref}>
-        <div className={`text-center mb-16 ${isVisible ? "animate-reveal-up" : "opacity-0"}`}>
+        <div className={`text-center mb-16 ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
           <span className="inline-block text-4xl mb-4">⭐</span>
           <h2 className="text-3xl sm:text-5xl font-black text-primary uppercase tracking-tight mb-4 text-balance">
             Lo que dicen nuestros clientes
@@ -40,7 +40,7 @@ export default function Testimonials() {
             <div
               key={t.author}
               className={`relative bg-card rounded-2xl p-8 shadow-warm transition-all duration-500 hover:-translate-y-2 hover:shadow-warm-lg group ${
-                isVisible ? "animate-reveal-up" : "opacity-0"
+                isVisible ? "animate-slide-up" : "opacity-0"
               }`}
               style={{ animationDelay: `${i * 100}ms` }}
             >
