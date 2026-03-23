@@ -8,60 +8,52 @@ export default function Hero() {
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
-    if (!section || !video) return;
+    if (!section || !video) {
+      console.log('Hero: Section or video ref not found');
+      return;
+    }
 
-    // Pause video - we control it manually via scroll
-    video.pause();
-    video.currentTime = 0;
+    console.log('Hero: Video element found, setting up basic handlers');
 
-    let ticking = false;
-
-    const updateVideoTime = () => {
-      const rect = section.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const sectionHeight = section.offsetHeight;
-
-      // Calculate exact scroll progress through the section
-      const start = rect.top;
-      const end = rect.bottom - viewportHeight;
-
-      // Progress from 0 to 1 as we scroll through section
-      let progress;
-      if (rect.top >= viewportHeight) {
-        // Section hasn't entered viewport
-        progress = 0;
-      } else if (rect.bottom <= 0) {
-        // Section has passed viewport
-        progress = 1;
-      } else {
-        // Section is in viewport - calculate exact progress
-        const scrollable = sectionHeight - viewportHeight;
-        const scrolled = -rect.top;
-        progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
-      }
-
-      // Directly map scroll to video time - no autoplay
-      video.currentTime = progress * video.duration;
-
-      ticking = false;
+    // Add event listeners for video loading
+    const handleLoadedData = () => {
+      console.log('Hero: Video loaded successfully, duration:', video.duration);
     };
 
-    const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateVideoTime);
-        ticking = true;
-      }
+    const handleError = (e: Event) => {
+      console.error('Hero: Video failed to load:', e);
+      console.error('Hero: Video error details:', video.error);
     };
 
-    // Initial call
-    updateVideoTime();
+    const handleCanPlay = () => {
+      console.log('Hero: Video can play');
+    };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", updateVideoTime);
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
+    video.addEventListener('canplay', handleCanPlay);
+
+    // Simple visibility check
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            console.log('Hero: Video is visible');
+          } else {
+            console.log('Hero: Video is not visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(section);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", updateVideoTime);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
+      video.removeEventListener('canplay', handleCanPlay);
+      observer.disconnect();
     };
   }, []);
 
@@ -77,10 +69,13 @@ export default function Hero() {
             ref={videoRef}
             className="absolute inset-0 w-full h-full object-cover"
             muted
+            autoPlay
+            loop
             playsInline
-            preload="auto"
+            preload="metadata"
             aria-hidden="true"
             onError={(e) => console.error('Video failed to load:', e)}
+            onLoadedData={() => console.log('Video loaded successfully')}
           >
             <source src="/video-bg.mp4" type="video/mp4" />
             Tu navegador no soporta el elemento de video.
