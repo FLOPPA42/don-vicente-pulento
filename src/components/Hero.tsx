@@ -11,34 +11,39 @@ export default function Hero() {
     if (!section || !video) return;
 
     video.pause();
-    video.currentTime = 0;
 
     let ticking = false;
+    let videoReady = false;
 
     const updateVideoTime = () => {
-      if (!video.duration || isNaN(video.duration)) return;
+      if (!videoReady || !video.duration || isNaN(video.duration)) return;
 
-      const rect = section.getBoundingClientRect();
+      // Get scroll position and section bounds
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const sectionTop = section.getBoundingClientRect().top + scrollTop;
+      const sectionBottom = sectionTop + section.offsetHeight;
       const viewportHeight = window.innerHeight;
-      const sectionHeight = section.offsetHeight;
 
-      let progress;
-      if (rect.top >= viewportHeight) {
-        progress = 0;
-      } else if (rect.bottom <= 0) {
-        progress = 1;
-      } else {
-        const scrollable = sectionHeight - viewportHeight;
-        const scrolled = -rect.top;
-        progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
-      }
+      // Calculate smooth progress through entire viewport
+      const startScroll = sectionTop - viewportHeight;
+      const endScroll = sectionBottom;
+      const totalScrollRange = endScroll - startScroll;
 
-      const time = progress * video.duration;
-      if (!isNaN(time)) {
-        video.currentTime = time;
+      let progress = (scrollTop - startScroll) / totalScrollRange;
+      progress = Math.max(0, Math.min(1, progress));
+
+      // Set video time with smooth interpolation
+      const targetTime = progress * video.duration;
+      if (!isNaN(targetTime) && targetTime >= 0 && targetTime <= video.duration) {
+        video.currentTime = targetTime;
       }
 
       ticking = false;
+    };
+
+    const handleLoadedData = () => {
+      videoReady = true;
+      updateVideoTime();
     };
 
     const onScroll = () => {
@@ -48,13 +53,15 @@ export default function Hero() {
       }
     };
 
-    updateVideoTime();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", updateVideoTime);
+    // Event listeners
+    video.addEventListener('loadeddata', handleLoadedData);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', updateVideoTime);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", updateVideoTime);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', updateVideoTime);
+      video.removeEventListener('loadeddata', handleLoadedData);
     };
   }, []);
 
@@ -85,8 +92,8 @@ export default function Hero() {
             Sabor auténtico de Chile
           </p>
           <div className="mt-6 flex gap-4">
-            <a href="#menu" className="rounded bg-primary px-6 py-2 text-white">Ver menú</a>
-            <a href="#ubicacion" className="rounded bg-secondary px-6 py-2 text-secondary">Ver ubicación</a>
+            <a href="#menu" className="rounded bg-primary px-6 py-2 text-white font-semibold hover:shadow-lg transition">Ver menú</a>
+            <a href="#ubicacion" className="rounded bg-secondary px-6 py-2 text-white font-semibold hover:shadow-lg transition">Ver ubicación</a>
           </div>
         </div>
       </div>
