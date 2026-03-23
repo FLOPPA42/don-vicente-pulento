@@ -30,16 +30,29 @@ export default function Hero() {
     };
   }, []);
 
-  // Update video frame continuously based on scroll position
+  const rafRef = useRef<number | null>(null);
+
+  // Update video frame using requestAnimationFrame for 60fps performance on Brave/Chromium
   useMotionValueEvent(scrollY, "change", (latest) => {
     const video = videoRef.current;
     if (video && videoDuration > 0) {
-      // Reduje la distancia máxima (500px) para que el video recorra toda su duración mucho más rápido al hacer scroll
-      const maxScrollDistance = 500; 
-      const progress = Math.min(Math.max(latest / maxScrollDistance, 0), 0.99);
-      video.currentTime = progress * videoDuration;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      
+      rafRef.current = requestAnimationFrame(() => {
+        // Reduje la distancia máxima (500px) para que el video recorra toda su duración mucho más rápido al hacer scroll
+        const maxScrollDistance = 500; 
+        const progress = Math.min(Math.max(latest / maxScrollDistance, 0), 0.99);
+        video.currentTime = progress * videoDuration;
+      });
     }
   });
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -84,8 +97,8 @@ export default function Hero() {
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-dark via-surface-dark/50 to-transparent" />
       </motion.div>
 
-      {/* Mandatory noise filter */}
-      <div className="absolute inset-0 pointer-events-none noise-overlay z-0" />
+      {/* Mandatory noise filter - FIXED to prevent GPU repaints on scroll (CRITICAL PERF) */}
+      <div className="fixed inset-0 pointer-events-none noise-overlay z-50 mix-blend-overlay" style={{ opacity: 0.5 }} />
 
       {/* Asymmetrical Layout Content */}
       <div className="container relative z-10 px-6 sm:px-12 lg:px-24 w-full">
