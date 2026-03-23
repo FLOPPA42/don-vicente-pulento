@@ -2,49 +2,122 @@ import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 export default function Hero() {
-  const sectionRef = useRef(null);
-  const videoRef = useRef(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const video = videoRef.current;
     const section = sectionRef.current;
-    if (!section || !video) return;
+    const video = videoRef.current;
+    if (!section || !video) {
+      console.log('Hero: Section or video ref not found');
+      return;
+    }
 
-    const updateTime = () => {
+    console.log('Hero: Setting up video scroll handler');
+
+    // Pause video - we control it manually via scroll
+    video.pause();
+    video.currentTime = 0;
+
+    let ticking = false;
+    let videoReady = false;
+
+    const updateVideoTime = () => {
+      if (!videoReady || !video.duration || isNaN(video.duration)) {
+        console.log('Hero: Video not ready, duration:', video.duration);
+        return;
+      }
+
       const rect = section.getBoundingClientRect();
-      const scrollTop = window.pageYOffset;
-      const progress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / rect.height));
-      video.currentTime = progress * video.duration;
+      const viewportHeight = window.innerHeight;
+      const sectionHeight = section.offsetHeight;
+
+      // Calculate scroll progress using absolute coordinates
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const sectionTop = rect.top + scrollTop;
+      const sectionBottom = sectionTop + sectionHeight;
+      const viewportBottom = scrollTop + viewportHeight;
+
+      let progress = 0;
+
+      if (viewportBottom > sectionTop && scrollTop < sectionBottom) {
+        // Section is in viewport
+        const visibleHeight = Math.min(viewportBottom, sectionBottom) - Math.max(scrollTop, sectionTop);
+        const scrollableHeight = sectionHeight;
+        progress = Math.max(0, Math.min(1, visibleHeight / scrollableHeight));
+      } else if (scrollTop >= sectionBottom) {
+        progress = 1;
+      }
+
+      // Smooth the progress value
+      const smoothedProgress = Math.max(0, Math.min(1, progress));
+
+      // Set video time with bounds checking
+      const targetTime = smoothedProgress * video.duration;
+      if (targetTime >= 0 && targetTime <= video.duration) {
+        video.currentTime = targetTime;
+        console.log('Hero: Video time:', targetTime.toFixed(2), 'progress:', (smoothedProgress * 100).toFixed(1) + '%');
+      }
+
+      ticking = false;
     };
 
     const onScroll = () => {
-      if (!video.paused) video.pause();
-      updateTime();
+      if (!ticking) {
+        window.requestAnimationFrame(updateVideoTime);
+        ticking = true;
+      }
     };
 
-    const onLoaded = () => video.play();
-    
-    video.addEventListener('canplay', onLoaded);
+    const handleLoadedData = () => {
+      console.log('Hero: Video loaded, duration:', video.duration);
+      videoReady = true;
+      updateVideoTime();
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Hero: Video failed to load:', e);
+    };
+
+    // Initial call
+    updateVideoTime();
+
+    // Add event listeners
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('error', handleError);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', updateTime);
-        return () => {
+    window.addEventListener('resize', updateVideoTime);
+
+    return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', updateTime);
-      video.removeEventListener('canplay', onLoaded);
+      window.removeEventListener('resize', updateVideoTime);
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('error', handleError);
     };
   }, []);
 
   return (
-    <section className="relative min-h-[250dvh]">
-      <div className="fixed inset-0 w-full h-full overflow-hidden">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          muted
-          preload="metadata"
-        >
-          <source src="/video-bg-optimized.mp4" type="video/mp4" />
-        </video>
+    <section
+      ref={sectionRef}
+      className="relative min-h-[250dvh]"
+    >
+      {/* Fixed video background */}
+      <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute inset-0">
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          >
+            <source src="/video-bg.mp4" type="video/mp4" />
+            Tu navegador no soporta el elemento de video.
+          </video>
+        </div>
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/70" />
       </div>
 
       <div className="relative z-10">
