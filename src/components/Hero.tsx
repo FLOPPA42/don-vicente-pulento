@@ -16,6 +16,8 @@ export default function Hero() {
     let ticking = false;
 
     const updateVideoTime = () => {
+      if (!video.duration || isNaN(video.duration)) return;
+
       const rect = section.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const sectionHeight = section.offsetHeight;
@@ -31,7 +33,10 @@ export default function Hero() {
         progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
       }
 
-      video.currentTime = progress * video.duration;
+      const time = progress * video.duration;
+      if (!isNaN(time)) {
+        video.currentTime = time;
+      }
 
       ticking = false;
     };
