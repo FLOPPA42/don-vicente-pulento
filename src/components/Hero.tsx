@@ -2,77 +2,30 @@ import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 export default function Hero() {
-  const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const section = sectionRef.current;
     const video = videoRef.current;
-    if (!section || !video) return;
+    if (!video) return;
 
-    video.pause();
-    let videoReady = false;
-    let lastUpdateTime = 0;
-    const UPDATE_THROTTLE_MS = 16; // ~60fps
-
-    const updateVideoTime = () => {
-      if (!videoReady || !video.duration || isNaN(video.duration)) return;
-
-      const now = performance.now();
-      if (now - lastUpdateTime < UPDATE_THROTTLE_MS) return;
-      lastUpdateTime = now;
-
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const sectionTop = section.getBoundingClientRect().top + scrollTop;
-      const sectionBottom = sectionTop + section.offsetHeight;
-      const viewportHeight = window.innerHeight;
-
-      const startScroll = sectionTop - viewportHeight;
-      const endScroll = sectionBottom;
-      const totalScrollRange = endScroll - startScroll;
-
-      let progress = (scrollTop - startScroll) / totalScrollRange;
-      progress = Math.max(0, Math.min(1, progress));
-
-      const targetTime = progress * video.duration;
-      if (!isNaN(targetTime) && targetTime >= 0 && targetTime <= video.duration) {
-        video.currentTime = targetTime;
-      }
-    };
-
-    const handleCanPlayThrough = () => {
-      videoReady = true;
-      updateVideoTime();
-    };
-
-    const onScroll = () => {
-      updateVideoTime();
-    };
-
-    const onResize = () => {
-      updateVideoTime();
-    };
-
-    video.addEventListener('canplaythrough', handleCanPlayThrough);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    // Video plays automatically in loop
+    video.play().catch(() => {
+      // Autoplay may be blocked, that's okay
+    });
 
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-      video.removeEventListener('canplaythrough', handleCanPlayThrough);
+      // Cleanup if needed
     };
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-[250dvh]"
-    >
+    <section className="relative min-h-screen">
       <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
+          autoPlay
+          loop
           muted
           playsInline
           preload="auto"
