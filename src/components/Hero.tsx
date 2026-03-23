@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, type Variants } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform, useMotionValueEvent, type Variants } from "framer-motion";
 import { ArrowDown } from "@phosphor-icons/react";
 
 export default function Hero() {
@@ -7,38 +7,38 @@ export default function Hero() {
   const { scrollY } = useScroll();
 
   const videoY = useTransform(scrollY, [0, 800], [0, -300]);
-  const videoOpacity = useTransform(scrollY, [0, 600], [0.8, 0.1]); // Reduced initial brightness for contrast
+  const videoOpacity = useTransform(scrollY, [0, 600], [1, 0.1]);
 
-  // Update video frame using a highly optimized raw DOM loop (bypasses React & Framer Motion entirely)
+  const [videoDuration, setVideoDuration] = useState(0);
+
+  // Set the duration when video metadata is loaded
   useEffect(() => {
-    let animationFrameId: number;
-    let targetTime = 0;
+    const video = videoRef.current;
+    if (!video) return;
 
-    const renderLoop = () => {
-      const video = videoRef.current;
-      if (video && video.readyState >= 1) { // Asegura que duration exista
-        // Read directly from the browser to avoid hook propagation delays
-        const scrollY = window.scrollY;
-        const maxScrollDistance = 500; 
-        const progress = Math.min(Math.max(scrollY / maxScrollDistance, 0), 0.999);
-        
-        targetTime = progress * video.duration;
-
-        // Actualizamos cada frame disponible sin el debounce arbitrario
-        if (Math.abs(video.currentTime - targetTime) > 0.005) {
-          video.currentTime = targetTime;
-        }
-      }
-      animationFrameId = requestAnimationFrame(renderLoop);
-    };
-
-    // Begin infinite optimized loop
-    animationFrameId = requestAnimationFrame(renderLoop);
+    const handleLoadedMetadata = () => setVideoDuration(video.duration);
+    
+    // Si ya cargó antes de que se ejecute el efecto
+    if (video.readyState >= 1) {
+      setVideoDuration(video.duration);
+    } else {
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, []);
+
+  // Frame control mapping scroll to video duration
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const video = videoRef.current;
+    if (video && videoDuration > 0) {
+      const maxScrollDistance = 500; 
+      const progress = Math.min(Math.max(latest / maxScrollDistance, 0), 0.999);
+      video.currentTime = progress * videoDuration;
+    }
+  });
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -83,8 +83,8 @@ export default function Hero() {
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-dark via-surface-dark/50 to-transparent" />
       </motion.div>
 
-      {/* Mandatory noise filter - FIXED to prevent GPU repaints on scroll (CRITICAL PERF) */}
-      <div className="fixed inset-0 pointer-events-none noise-overlay z-50 mix-blend-overlay" style={{ opacity: 0.5 }} />
+      {/* Mandatory noise filter restored to absolute */}
+      <div className="absolute inset-0 pointer-events-none noise-overlay z-0" />
 
       {/* Asymmetrical Layout Content */}
       <div className="container relative z-10 px-6 sm:px-12 lg:px-24 w-full">
