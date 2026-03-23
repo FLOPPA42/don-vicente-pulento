@@ -12,10 +12,15 @@ export default function Hero() {
 
     video.pause();
     let videoReady = false;
-    let rafId: number | null = null;
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE_MS = 16; // ~60fps
 
     const updateVideoTime = () => {
       if (!videoReady || !video.duration || isNaN(video.duration)) return;
+
+      const now = performance.now();
+      if (now - lastUpdateTime < UPDATE_THROTTLE_MS) return;
+      lastUpdateTime = now;
 
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const sectionTop = section.getBoundingClientRect().top + scrollTop;
@@ -41,16 +46,7 @@ export default function Hero() {
     };
 
     const onScroll = () => {
-      if (!videoReady) return;
-      
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-      
-      rafId = requestAnimationFrame(() => {
-        updateVideoTime();
-        rafId = null;
-      });
+      updateVideoTime();
     };
 
     const onResize = () => {
@@ -65,9 +61,6 @@ export default function Hero() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
       video.removeEventListener('canplaythrough', handleCanPlayThrough);
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
     };
   }, []);
 
