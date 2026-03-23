@@ -11,8 +11,6 @@ export default function Hero() {
     if (!section || !video) return;
 
     video.pause();
-
-    let ticking = false;
     let videoReady = false;
 
     const updateVideoTime = () => {
@@ -32,36 +30,36 @@ export default function Hero() {
       let progress = (scrollTop - startScroll) / totalScrollRange;
       progress = Math.max(0, Math.min(1, progress));
 
-      // Set video time with smooth interpolation
+      // Set video time with high precision
       const targetTime = progress * video.duration;
       if (!isNaN(targetTime) && targetTime >= 0 && targetTime <= video.duration) {
         video.currentTime = targetTime;
       }
-
-      ticking = false;
     };
 
-    const handleLoadedData = () => {
+    const handleCanPlayThrough = () => {
       videoReady = true;
       updateVideoTime();
     };
 
+    // Use passive listener for better scroll performance
     const onScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateVideoTime);
-        ticking = true;
-      }
+      updateVideoTime();
+    };
+
+    const onResize = () => {
+      updateVideoTime();
     };
 
     // Event listeners
-    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('canplaythrough', handleCanPlayThrough);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', updateVideoTime);
+    window.addEventListener('resize', onResize);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', updateVideoTime);
-      video.removeEventListener('loadeddata', handleLoadedData);
+      window.removeEventListener('resize', onResize);
+      video.removeEventListener('canplaythrough', handleCanPlayThrough);
     };
   }, []);
 
