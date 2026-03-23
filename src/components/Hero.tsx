@@ -30,10 +30,7 @@ export default function Hero() {
     };
 
     const handleCanPlay = () => {
-      console.log('Hero: Video can play, enabling scroll control');
-      videoReady = true;
-      // Initial call once video is ready
-      updateVideoTime();
+      console.log('Hero: Video can play');
     };
 
     video.addEventListener('loadeddata', handleLoadedData);
@@ -122,7 +119,7 @@ export default function Hero() {
             onError={(e) => console.error('Video failed to load:', e)}
             onLoadedData={() => console.log('Video loaded successfully')}
           >
-            <source src="/video-bg.mp4" type="video/mp4" />
+            <source src="/video-bg-optimized.mp4" type="video/mp4" />
             Tu navegador no soporta el elemento de video.
           </video>
         </div>
