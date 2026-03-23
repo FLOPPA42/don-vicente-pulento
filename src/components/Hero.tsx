@@ -80,8 +80,10 @@ export default function Hero() {
             playsInline
             preload="auto"
             aria-hidden="true"
+            onError={(e) => console.error('Video failed to load:', e)}
           >
             <source src="/video-bg.mp4" type="video/mp4" />
+            Tu navegador no soporta el elemento de video.
           </video>
         </div>
         {/* Overlay gradient */}
