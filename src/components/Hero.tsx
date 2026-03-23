@@ -2,54 +2,72 @@ import { useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 export default function Hero() {
+  const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    const section = sectionRef.current;
     const video = videoRef.current;
-    if (!video) return;
+    if (!section || !video) return;
 
-    const handleLoadStart = () => {
-      console.log('Hero: Video loading...');
+    video.pause();
+    video.currentTime = 0;
+
+    let ticking = false;
+
+    const updateVideoTime = () => {
+      const rect = section.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const sectionHeight = section.offsetHeight;
+
+      let progress;
+      if (rect.top >= viewportHeight) {
+        progress = 0;
+      } else if (rect.bottom <= 0) {
+        progress = 1;
+      } else {
+        const scrollable = sectionHeight - viewportHeight;
+        const scrolled = -rect.top;
+        progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
+      }
+
+      video.currentTime = progress * video.duration;
+
+      ticking = false;
     };
 
-    const handleCanPlay = () => {
-      console.log('Hero: Video can play, duration:', video.duration);
-      video.play().catch(err => console.log('Hero: Autoplay prevented:', err.message));
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateVideoTime);
+        ticking = true;
+      }
     };
 
-    const handleError = (e: Event) => {
-      console.error('Hero: Video error:', video.error?.code, video.error?.message);
-    };
-
-    video.addEventListener('loadstart', handleLoadStart);
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('error', handleError);
+    updateVideoTime();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateVideoTime);
 
     return () => {
-      video.removeEventListener('loadstart', handleLoadStart);
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('error', handleError);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateVideoTime);
     };
   }, []);
 
   return (
-    <section className="relative min-h-screen">
-      {/* Fixed video background */}
+    <section
+      ref={sectionRef}
+      className="relative min-h-[250dvh]"
+    >
       <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
-          autoPlay
-          loop
           muted
           playsInline
           preload="auto"
-          aria-hidden="true"
         >
-          <source src="/video-bg-optimized.mp4" type="video/mp4" />
-          Tu navegador no soporta el elemento de video.
+          <source src="/video-bg.mp4" type="video/mp4" />
         </video>
-        {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/70" />
       </div>
 
