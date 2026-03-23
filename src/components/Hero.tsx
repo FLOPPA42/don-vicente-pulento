@@ -30,7 +30,10 @@ export default function Hero() {
     };
 
     const handleCanPlay = () => {
-      console.log('Hero: Video can play');
+      console.log('Hero: Video can play, enabling scroll control');
+      videoReady = true;
+      // Initial call once video is ready
+      updateVideoTime();
     };
 
     video.addEventListener('loadeddata', handleLoadedData);
@@ -38,37 +41,42 @@ export default function Hero() {
     video.addEventListener('canplay', handleCanPlay);
 
     let ticking = false;
+    let videoReady = false;
 
     const updateVideoTime = () => {
+      if (!videoReady || !video.duration || isNaN(video.duration)) {
+        console.log('Hero: Video not ready yet');
+        return;
+      }
+
       const rect = section.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const sectionHeight = section.offsetHeight;
 
-      // Calculate exact scroll progress through the section
-      const start = rect.top;
-      const end = rect.bottom - viewportHeight;
+      // Calculate scroll progress more smoothly
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const sectionTop = rect.top + scrollTop;
+      const sectionBottom = sectionTop + sectionHeight;
+      const viewportBottom = scrollTop + viewportHeight;
 
-      // Progress from 0 to 1 as we scroll through section
-      let progress;
-      if (rect.top >= viewportHeight) {
-        // Section hasn't entered viewport
-        progress = 0;
-      } else if (rect.bottom <= 0) {
-        // Section has passed viewport
+      let progress = 0;
+
+      if (viewportBottom > sectionTop && scrollTop < sectionBottom) {
+        // Section is in viewport
+        const visibleHeight = Math.min(viewportBottom, sectionBottom) - Math.max(scrollTop, sectionTop);
+        const scrollableHeight = sectionHeight;
+        progress = Math.max(0, Math.min(1, visibleHeight / scrollableHeight));
+      } else if (scrollTop >= sectionBottom) {
         progress = 1;
-      } else {
-        // Section is in viewport - calculate exact progress
-        const scrollable = sectionHeight - viewportHeight;
-        const scrolled = -rect.top;
-        progress = Math.min(Math.max(scrolled / scrollable, 0), 1);
       }
 
-      // Directly map scroll to video time - no autoplay
-      if (video.duration && !isNaN(video.duration)) {
-        video.currentTime = progress * video.duration;
-        console.log('Hero: Video time set to:', video.currentTime, 'progress:', progress);
-      } else {
-        console.warn('Hero: Video duration not available yet');
+      // Smooth the progress value to avoid jerky animation
+      const smoothedProgress = Math.max(0, Math.min(1, progress));
+
+      // Set video time with bounds checking
+      const targetTime = smoothedProgress * video.duration;
+      if (targetTime >= 0 && targetTime <= video.duration) {
+        video.currentTime = targetTime;
       }
 
       ticking = false;
