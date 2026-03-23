@@ -12,17 +12,16 @@ export default function Hero() {
 
     video.pause();
     let videoReady = false;
+    let rafId: number | null = null;
 
     const updateVideoTime = () => {
       if (!videoReady || !video.duration || isNaN(video.duration)) return;
 
-      // Get scroll position and section bounds
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const sectionTop = section.getBoundingClientRect().top + scrollTop;
       const sectionBottom = sectionTop + section.offsetHeight;
       const viewportHeight = window.innerHeight;
 
-      // Calculate smooth progress through entire viewport
       const startScroll = sectionTop - viewportHeight;
       const endScroll = sectionBottom;
       const totalScrollRange = endScroll - startScroll;
@@ -30,7 +29,6 @@ export default function Hero() {
       let progress = (scrollTop - startScroll) / totalScrollRange;
       progress = Math.max(0, Math.min(1, progress));
 
-      // Set video time with high precision
       const targetTime = progress * video.duration;
       if (!isNaN(targetTime) && targetTime >= 0 && targetTime <= video.duration) {
         video.currentTime = targetTime;
@@ -42,16 +40,23 @@ export default function Hero() {
       updateVideoTime();
     };
 
-    // Use passive listener for better scroll performance
     const onScroll = () => {
-      updateVideoTime();
+      if (!videoReady) return;
+      
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      
+      rafId = requestAnimationFrame(() => {
+        updateVideoTime();
+        rafId = null;
+      });
     };
 
     const onResize = () => {
       updateVideoTime();
     };
 
-    // Event listeners
     video.addEventListener('canplaythrough', handleCanPlayThrough);
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
@@ -60,6 +65,9 @@ export default function Hero() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
       video.removeEventListener('canplaythrough', handleCanPlayThrough);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, []);
 
