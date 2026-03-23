@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent, type Variants } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import { ArrowDown } from "@phosphor-icons/react";
 
 export default function Hero() {
@@ -7,50 +7,36 @@ export default function Hero() {
   const { scrollY } = useScroll();
 
   const videoY = useTransform(scrollY, [0, 800], [0, -300]);
-  const videoOpacity = useTransform(scrollY, [0, 600], [1, 0.1]);
+  const videoOpacity = useTransform(scrollY, [0, 600], [0.8, 0.1]); // Reduced initial brightness for contrast
 
-  const [videoDuration, setVideoDuration] = useState(0);
-
-  // Set the duration when video metadata is loaded
+  // Update video frame using a highly optimized raw DOM loop (bypasses React & Framer Motion entirely)
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    let animationFrameId: number;
+    let targetTime = 0;
 
-    const handleLoadedMetadata = () => setVideoDuration(video.duration);
-    
-    // Si ya cargó antes de que se ejecute el efecto
-    if (video.readyState >= 1) {
-      setVideoDuration(video.duration);
-    } else {
-      video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    }
-
-    return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-    };
-  }, []);
-
-  const rafRef = useRef<number | null>(null);
-
-  // Update video frame using requestAnimationFrame for 60fps performance on Brave/Chromium
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const video = videoRef.current;
-    if (video && videoDuration > 0) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      
-      rafRef.current = requestAnimationFrame(() => {
-        // Reduje la distancia máxima (500px) para que el video recorra toda su duración mucho más rápido al hacer scroll
+    const renderLoop = () => {
+      const video = videoRef.current;
+      if (video && video.readyState >= 1) { // Asegura que duration exista
+        // Read directly from the browser to avoid hook propagation delays
+        const scrollY = window.scrollY;
         const maxScrollDistance = 500; 
-        const progress = Math.min(Math.max(latest / maxScrollDistance, 0), 0.99);
-        video.currentTime = progress * videoDuration;
-      });
-    }
-  });
+        const progress = Math.min(Math.max(scrollY / maxScrollDistance, 0), 0.999);
+        
+        targetTime = progress * video.duration;
 
-  // Cleanup on unmount
-  useEffect(() => {
+        // Debounce actualizaciones microscópicas para evitar colapsar el decodificador H264 de Chromium
+        if (Math.abs(video.currentTime - targetTime) > 0.04) {
+          video.currentTime = targetTime;
+        }
+      }
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    // Begin infinite optimized loop
+    animationFrameId = requestAnimationFrame(renderLoop);
+
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
